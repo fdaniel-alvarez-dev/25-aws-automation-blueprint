@@ -1,0 +1,50 @@
+services:
+  postgres-primary:
+    image: bitnami/postgresql:16
+    environment:
+      - POSTGRESQL_USERNAME=app
+      - POSTGRESQL_PASSWORD=app-password
+      - POSTGRESQL_DATABASE=appdb
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl
+      - POSTGRESQL_REPLICATION_PASSWORD=repl-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - primary_data:/bitnami/postgresql
+
+  postgres-replica:
+    image: bitnami/postgresql:16
+    depends_on:
+      - postgres-primary
+    environment:
+      - POSTGRESQL_USERNAME=app
+      - POSTGRESQL_PASSWORD=app-password
+      - POSTGRESQL_DATABASE=appdb
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl
+      - POSTGRESQL_REPLICATION_PASSWORD=repl-password
+      - POSTGRESQL_MASTER_HOST=postgres-primary
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+    ports:
+      - "5433:5432"
+    volumes:
+      - replica_data:/bitnami/postgresql
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    depends_on:
+      - postgres-primary
+    ports:
+      - "6432:6432"
+    environment:
+      - DB_USER=app
+      - DB_PASSWORD=app-password
+      - DB_HOST=postgres-primary
+      - DB_NAME=appdb
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=200
+      - DEFAULT_POOL_SIZE=20
+volumes:
+  primary_data:
+  replica_data:

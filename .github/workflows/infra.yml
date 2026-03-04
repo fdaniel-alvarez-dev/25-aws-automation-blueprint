@@ -1,0 +1,20 @@
+name: infra
+on:
+  push:
+  pull_request:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+      - name: Terraform validate (example)
+        working-directory: infra/examples/dev
+        run: |
+          terraform init -backend=false
+          terraform validate
